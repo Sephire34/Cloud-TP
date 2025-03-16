@@ -124,3 +124,126 @@ C:\Users\touff>curl http://52.224.242.182:8888
 
 ## Partie 2
 
+Je vais commencer par crée le répertoire adequat 
+
+```bash
+mkdir ~/apache_custom && cd ~/apache_custom
+```
+
+je fais un petit fichier html personnalisé 
+
+```bash
+echo "<h1>Bienvenue etre humain</h1>" > index.html
+```
+
+On crée ensuite le fichier de conf apache
+
+```
+nano apache2.conf
+```
+
+
+et on vas mettre notre petite conf dedans
+
+```bash
+Listen 80
+
+LoadModule mpm_event_module "/usr/lib/apache2/modules/mod_mpm_event.so"
+LoadModule dir_module "/usr/lib/apache2/modules/mod_dir.so"
+LoadModule authz_core_module "/usr/lib/apache2/modules/mod_authz_core.so"
+
+DirectoryIndex index.html
+DocumentRoot "/var/www/html/"
+
+ErrorLog "/var/log/apache2/error.log"
+LogLevel warn
+```
+
+
+Maintenant on passe à notre petit docker file on vas donc crée le fichier
+
+```
+nano Dockerfile
+```
+
+on met notre conf dedans 
+
+```bash
+FROM debian:latest
+
+RUN apt update -y && apt install -y apache2
+
+COPY index.html /var/www/html/index.html
+
+COPY apache2.conf /etc/apache2/apache2.conf
+
+CMD [ "/usr/sbin/apache2ctl", "-D", "FOREGROUND" ]
+```
+
+on crée mtn l image personnalisé
+
+```bash
+docker build . -t my_apache
+```
+
+des que le build se finis j obtient ceci
+
+```
+root@test:~/apache_custom# docker build . -t my_apache
+[+] Building 29.2s (9/9) FINISHED                                                                                          docker:default
+ => [internal] load build definition from Dockerfile                                                                                 0.0s
+ => => transferring dockerfile: 242B                                                                                                 0.0s
+ => [internal] load metadata for docker.io/library/debian:latest                                                                     0.1s
+ => [internal] load .dockerignore                                                                                                    0.0s
+ => => transferring context: 2B                                                                                                      0.0s
+ => [1/4] FROM docker.io/library/debian:latest@sha256:35286826a88dc879b4f438b645ba574a55a14187b483d09213a024dc0c0a64ed               3.9s
+ => => resolve docker.io/library/debian:latest@sha256:35286826a88dc879b4f438b645ba574a55a14187b483d09213a024dc0c0a64ed               0.1s
+ => => sha256:0cc7b2132ebf8d535c3a8efd12be46902dd58c496dae66c478a6e64d9588a38d 1.02kB / 1.02kB                                       0.0s
+ => => sha256:d4ccddb816ba27eaae22ef3d56175d53f47998e2acb99df1ae0e5b426b28a076 453B / 453B                                           0.0s
+ => => sha256:155ad54a8b2812a0ec559ff82c0c6f0f0dddb337a226b11879f09e15f67b69fc 48.48MB / 48.48MB                                     1.1s
+ => => sha256:35286826a88dc879b4f438b645ba574a55a14187b483d09213a024dc0c0a64ed 8.52kB / 8.52kB                                       0.0s
+ => => extracting sha256:155ad54a8b2812a0ec559ff82c0c6f0f0dddb337a226b11879f09e15f67b69fc                                            2.1s
+ => [internal] load build context                                                                                                    0.0s
+ => => transferring context: 104B                                                                                                    0.0s
+ => [2/4] RUN apt update -y && apt install -y apache2                                                                               21.1s
+ => [3/4] COPY index.html /var/www/html/index.html                                                                                   0.2s
+ => [4/4] COPY apache2.conf /etc/apache2/apache2.conf                                                                                0.1s
+ => exporting to image                                                                                                               3.5s
+ => => exporting layers                                                                                                              3.4s
+ => => writing image sha256:e58291beb4b188866a02ff1b25b68bc5f9f95f2b68e804e48bae6815bbe752d8                                         0.0s
+ => => naming to docker.io/library/my_apache    
+```
+
+le build a donc fonctionné
+
+je vérifie ensuite que l image a bien était crée
+
+```
+root@test:~/apache_custom# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED              SIZE
+my_apache    latest    e58291beb4b1   About a minute ago   253MB
+nginx        latest    b52e0b094bc0   5 weeks ago          192MB
+```
+
+L image est bien présente.
+
+Maintenant je lance mon conteneur
+
+```bash
+docker run --name apache_custom -d -p 8080:80 my_apache
+```
+
+Je curl pour vérifié l'accès
+
+```bash
+root@test:~/apache_custom# curl http://52.224.242.182:8080
+<h1>Bienvenue etre humain</h1>
+```
+
+Le site est accessible tout fonctionne (j aime tellement quand ça marche)
+
+
+
+## Partie 3
+
+
