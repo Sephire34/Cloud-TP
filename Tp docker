@@ -1,0 +1,126 @@
+## Partie 1
+
+**Première étape j ai installé docker en suivant la doc officiel :**
+```bash
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```      
+
+
+🌞 **Utiliser la commande `docker run`**
+
+**J ai ensuite crée un conteneur** 
+
+``` bash
+Sudo docker run --name web -d -p 9999:80 nginx
+```
+
+comme t as demandé j ai lancé avec un partage de port avec le port 9999 redirigé vers le port 80
+
+**J ai donc ensuite obtenue l id du conteneur:**
+```
+b2c2dc5138425c9d15f4539a0f289e4aa1c0074df490210783cc87aca57be131
+```
+
+
+🌞 **Rendre le service dispo sur internet**
+
+**J'ai rajouté un paramètre dans les réglages réseau pour ajouter le port 9999**
+
+**J'ai donc pu curl et accéder à l'interface web:**
+``` bash
+curl http:52.224.242.182//:9999
+```
+
+``` html
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+
+
+🌞 **Custom un peu le lancement du conteneur**
+
+Maintenant on vas custom tout ca hein..
+
+déjà je vais crée le répertoire pour stocker la conf et les fichiers du site
+
+``` bash
+mkdir -p ~/nginx_custom/html ~/nginx_custom/conf
+```
+
+dans le répertoire je met mon petit fichier custom
+
+```bash
+echo "<h1>Bienvenue ici tu es chez moi. !</h1>" > ~/nginx_custom/html/index.html
+```
+
+bien mtn qu on a fais ca je vais crée un fichier custom conf pour écouter sur le port 7777
+``` 
+nano ~/nginx_custom/conf/custom.conf
+```
+
+et j ai mis la conf que tu nous as donné dedans 
+```
+server {
+    listen 7777;
+    root /var/www/tp_docker;
+    index index.html;
+}
+```
+
+bon j avoue que pour cette partie je me suis un peu fait aider, ducoup j ai relancé le conteneur en montant les fichiers personnalisé dedans (j ai du le faire 5 fois avant que ca marche)
+
+```bash
+docker run --name meow -d \
+  -v ~/nginx_custom/html:/var/www/tp_docker \
+  -v $(realpath ~/nginx_custom/conf/custom.conf):/etc/nginx/conf.d/custom.conf \
+  -p 8888:7777 \
+  --memory="512m" \
+  nginx
+```
+
+
+Bon le moment de vérité je curl avec l ip publique et le port 8888 pour voir si le site est accessible 
+
+```bash
+curl http://52.224.242.182:8888
+```
+
+et sa me retourne bien ma conf perso
+```
+C:\Users\touff>curl http://52.224.242.182:8888
+<h1>Bienvenue ici tu es chez moi. \!</h1>
+```
+
+
+## Partie 2
+
